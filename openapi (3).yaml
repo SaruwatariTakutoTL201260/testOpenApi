@@ -1,0 +1,216 @@
+openapi: 3.0.3
+
+# info
+info:
+  title: Swagger Test
+  description: tagsとsecurityについて
+  version: 1.0.11
+  
+# サーバー(今回server response見ないため使わない)
+  
+# タグ
+tags:
+  - name: dish
+    description: 皿
+  - name: tableware
+    description: 食器
+  
+paths:
+  /dish/{id}:
+    get:
+      tags: 
+        - dish
+      summary: 皿情報取得
+      description: idを指定して取得
+      operationId: findByDishId
+      parameters:
+        - $ref: '#/components/parameters/idPath'
+      responses:
+        '200':
+          description: seccess
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: 
+                    type: integer
+                    format: int64
+                    minimum: 0
+                    example: 77
+                  name:
+                    type: string
+                    example: testName
+                  modified:
+                    type: string
+                    format: date-time
+                    example: 1997-07-16T9:20:30+01:00
+                  is_deleted:
+                    type: boolean
+                    example: false
+                  table_id: 
+                    type: integer
+                    format: int64
+                  list:
+                    type: array
+                    items:
+                      type: integer
+                      format: int32
+                    example: [1,2,4]
+                example:
+                  - id: 1
+                    name: testName
+                    modified: 2001-03-23T0:23:23+00:00
+                    is_deleted: true
+                    table_id: 1
+                    list: [13,54,5]
+                  - id: 2
+                    name: testName2
+                    modified: 2021-03-23T0:23:23+00:00
+                    table_id: 3
+                    is_deleted: false
+                    list: [32,5,23,3]
+          links:
+            FindByTableId:
+              $ref: '#/components/links/FindByTableId'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+      # readを指定
+        - oauth2: [read]
+  /tableware/{id}:
+    get:
+      tags: 
+        - tableware
+      summary: 食器情報取得
+      description: idを指定して取得
+      operationId: findByTablewareId
+      parameters:
+        - in: path
+          name: id
+          description: id指定
+          required: true
+          schema: 
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: seccess
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: 
+                    type: integer
+                    format: int64
+                    minimum: 0
+                    example: 1
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+          
+security:
+  - dish_bearer_auth: []
+  - basic_auth: []
+  - open_id_connected: []
+  
+components:
+  # レスポンス
+  responses:
+    NotFound:
+      description: data Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples: 
+            NotFoundExample:
+              $ref: '#/components/examples/NotFoundExample'
+    BadRequest:
+      description: bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            BadRequest:
+              $ref: '#/components/examples/BadRequest'
+  schemas:
+    user:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+      example:
+        - id: 23
+          name: testname
+        - id: 2
+          name: testName2
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+  # example
+  examples:
+    NotFoundExample:
+      value:
+        - code: 404
+        - message: url not found
+    BadRequest:
+      value:
+        - code: 400
+        - message: bad request
+  # parameters
+  parameters:
+    idPath:
+      in: path
+      name: id
+      description: id指定
+      required: true
+      schema: 
+        type: integer
+        format: int64
+  links:
+    FindByTableId:
+      operationId: FindByTableId
+      parameters:
+        id: '$response.body#/table_id'
+  securitySchemes:
+    dish_bearer_auth:
+      type: http
+      scheme: bearer
+    basic_auth:
+      type: http
+      scheme: basic
+    api_key_auth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    open_id_connected:
+      type: openIdConnect
+      openIdConnectUrl: https://example.com
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://example.com
+          tokenUrl: https://example.com/oauth/token
+          scopes:
+            read: dish read access
+      
+      
+      
+      
+      
