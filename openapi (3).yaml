@@ -57,19 +57,9 @@ paths:
                       type: integer
                       format: int32
                     example: [1,2,4]
-                example:
-                  - id: 1
-                    name: testName
-                    modified: 2001-03-23T0:23:23+00:00
-                    is_deleted: true
-                    table_id: 1
-                    list: [13,54,5]
-                  - id: 2
-                    name: testName2
-                    modified: 2021-03-23T0:23:23+00:00
-                    table_id: 3
-                    is_deleted: false
-                    list: [32,5,23,3]
+              examples:
+                Success:
+                  $ref: '#/components/examples/DishSuccess'
           links:
             FindByTableId:
               $ref: '#/components/links/FindByTableId'
@@ -107,7 +97,9 @@ paths:
                     type: integer
                     format: int64
                     minimum: 0
-                    example: 1
+              examples:
+                Success:
+                  $ref: '#/components/examples/TableSuccess'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -172,6 +164,26 @@ components:
       value:
         - code: 400
         - message: bad request
+    TableSuccess:
+      value:
+        - code: 200
+        - message: success
+        - data:
+          - id: 1
+    DishSuccess:
+      value:
+        - id: 1
+          name: testName
+          modified: 2001-03-23T0:23:23+00:00
+          is_deleted: true
+          table_id: 1
+          list: [13,54,5]
+        - id: 2
+          name: testName2
+          modified: 2021-03-23T0:23:23+00:00
+          table_id: 3
+          is_deleted: false
+          list: [32,5,23,3]
   # parameters
   parameters:
     idPath:
