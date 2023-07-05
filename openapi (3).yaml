@@ -16,18 +16,35 @@ tags:
     description: 食器
   
 paths:
-  /dish/{id}:
+  /dish:
     get:
-      tags: 
+      tags:
         - dish
-      summary: 皿情報取得
-      description: idを指定して取得
-      operationId: findByDishId
+      summary: 皿一覧取得
+      description: パラメータによる取得
+      operationId: fetchDataList
       parameters:
-        - $ref: '#/components/parameters/idPath'
+        - in: query
+          name: id
+          schema:
+            type: integer
+        - in: query
+          name: name
+          schema:
+            type: string
+            maxLength: 64 
+        - in: query
+          name: modified
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: table_id
+          schema:
+            type: integer
       responses:
         '200':
-          description: seccess
+          description: success
           content:
             application/json:
               schema:
@@ -51,17 +68,48 @@ paths:
                   table_id: 
                     type: integer
                     format: int64
-                  list:
-                    type: array
-                    items:
-                      type: integer
-                      format: int32
-                    example: [1,2,4]
               examples:
                 Success:
-                  $ref: '#/components/examples/DishSuccess'
-                Success2:
-                  $ref: '#/components/examples/DishSuccess2'
+                  $ref: '#/components/examples/DishFetchDataListSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags:
+        - dish
+      summary: 皿登録
+      operationId: createDish
+      parameters: []
+      requestBody:
+       content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/dish'
+      responses:
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '201':
+          $ref: '#/components/responses/CreateSuccess'
+  /dish/{id}:
+    get:
+      tags: 
+        - dish
+      summary: 皿情報取得
+      description: idを指定して取得
+      operationId: findByDishId
+      parameters:
+        - $ref: '#/components/parameters/idPath'
+      responses:
+        '200':
+          description: seccess
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dish'
+              examples:
+                Success:
+                  $ref: '#/components/examples/DishFetchDataSuccess'
           links:
             FindByTableId:
               $ref: '#/components/links/FindByTableId'
@@ -72,6 +120,52 @@ paths:
       security:
       # readを指定
         - oauth2: [read]
+    delete:
+      tags:
+        - dish
+      summary: 食器削除処理
+      description: idを指定して論理削除
+      parameters:
+        - in: path
+          name: id
+          description: id指定
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+           $ref: '#/components/responses/DeleteSuccess'
+    put:
+      tags:
+        - dish
+      summary: 食器変更処理
+      description: 変更処理
+      parameters:
+        - in: path
+          name: id
+          description: id指定
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/dish'
+      responses:
+        '200':
+          description: seccess
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dish'
+              examples:
+                Success:
+                  $ref: '#/components/examples/UpdateSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /tableware/{id}:
     get:
       tags: 
@@ -108,7 +202,7 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
-          
+    
 security:
   - dish_bearer_auth: []
   - basic_auth: []
@@ -135,6 +229,24 @@ components:
           examples:
             BadRequest:
               $ref: '#/components/examples/BadRequest'
+    CreateSuccess:
+      description: create success
+      content:
+        application/json:
+          schema: 
+            $ref: '#/components/schemas/Error'
+          examples:
+            CreateSuccess:
+              $ref: '#/components/examples/CreateSuccess'
+    DeleteSuccess:
+      description: delete success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            DeleteSuccess:
+              $ref: '#/components/examples/DeleteSuccess'
   schemas:
     user:
       type: object
@@ -158,16 +270,60 @@ components:
       required:
         - code
         - message
+    dish:
+      type: object
+      properties:
+        id: 
+          type: integer
+          format: int64
+          minimum: 0
+          example: 1
+        name:
+          type: string
+          example: testName
+        modified:
+          type: string
+          format: date-time
+        is_deleted:
+          type: boolean
+        table_id: 
+          type: integer
+          format: int64
+          example: 2
   # example
   examples:
     NotFoundExample:
       value:
         - code: 404
-        - message: url not found
+        - message: not found
     BadRequest:
       value:
         - code: 400
         - message: bad request
+    CreateSuccess:
+      value:
+        - code: 201
+        - message: create success
+        - data:
+          - id: 7
+            name: testName
+            modified: 2021-12-30T0:23:23+00:00
+            table_id: 2
+            is_deleted: false
+    DeleteSuccess:
+      value:
+        - code: 200
+        - message: delete success
+    UpdateSuccess:
+      value:
+        - code: 200
+        - message: update success
+        - data:
+          - id: 4
+            name: updateTestName
+            modified: 2021-12-30T0:23:23+00:00
+            table_id: 3
+            is_deleted: false
     TableSuccess:
       value:
         - code: 200
@@ -180,34 +336,31 @@ components:
         - message: success
         - data:
           - id: 10
-    DishSuccess:
+    DishFetchDataSuccess:
       value:
-        - id: 1
-          name: testName
-          modified: 2001-03-23T0:23:23+00:00
-          is_deleted: true
-          table_id: 1
-          list: [13,54,5]
-        - id: 2
-          name: testName2
-          modified: 2021-03-23T0:23:23+00:00
-          table_id: 3
-          is_deleted: false
-          list: [32,5,23,3]
-    DishSuccess2:
+        - code: 200
+        - message: success
+        - data:
+          - id: 1
+            name: testName
+            modified: 2001-03-23T0:23:23+00:00
+            is_deleted: true
+            table_id: 1
+    DishFetchDataListSuccess:
       value:
-        - id: 5
-          name: testName3
-          modified: 2101-03-23T0:23:23+00:00
-          is_deleted: true
-          table_id: 1
-          list: [48,5,15,93]
-        - id: 6
-          name: testName4
-          modified: 2021-03-23T0:13:23+00:00
-          table_id: 8
-          is_deleted: false
-          list: [42,1,3]
+        - code: 200
+        - message: success
+        - data:
+          - id: 5
+            name: testName3
+            modified: 2101-03-23T0:23:23+00:00
+            is_deleted: true
+            table_id: 1
+          - id: 6
+            name: testName4
+            modified: 2021-03-23T0:13:23+00:00
+            table_id: 8
+            is_deleted: false
   # parameters
   parameters:
     idPath:
