@@ -85,7 +85,7 @@ paths:
        content:
         application/json:
           schema:
-            $ref: '#/components/schemas/dish'
+            $ref: '#/components/schemas/dishRequestBody'
       responses:
         '400':
           $ref: '#/components/responses/BadRequest'
@@ -123,35 +123,29 @@ paths:
     delete:
       tags:
         - dish
-      summary: 食器削除処理
+      summary: 皿削除処理
       description: idを指定して論理削除
       parameters:
-        - in: path
-          name: id
-          description: id指定
-          required: true
-          schema:
-            type: integer
+        - $ref: '#/components/parameters/idPath'
       responses:
         '200':
            $ref: '#/components/responses/DeleteSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
     put:
       tags:
         - dish
-      summary: 食器変更処理
+      summary: 皿変更処理
       description: 変更処理
       parameters:
-        - in: path
-          name: id
-          description: id指定
-          required: true
-          schema:
-            type: integer
+        - $ref: '#/components/parameters/idPath'
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/dish'
+              $ref: '#/components/schemas/dishRequestBody'
       responses:
         '200':
           description: seccess
@@ -166,24 +160,25 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
-  /tableware/{id}:
+  /tableware:
     get:
-      tags: 
+      tags:
         - tableware
-      summary: 食器情報取得
-      description: idを指定して取得
-      operationId: findByTablewareId
+      summary: 食器一覧取得
+      description: パラメータによる取得
+      operationId: fetchDataListTableware
       parameters:
-        - in: path
+        - in: query
           name: id
-          description: id指定
-          required: true
-          schema: 
+          schema:
             type: integer
-            format: int64
+        - in: query
+          name: contents
+          schema:
+            type: string
       responses:
         '200':
-          description: seccess
+          description: success
           content:
             application/json:
               schema:
@@ -193,16 +188,115 @@ paths:
                     type: integer
                     format: int64
                     minimum: 0
+                  is_deleted:
+                    type: boolean
+                  contents:
+                    type: string
               examples:
-                Success1:
-                  $ref: '#/components/examples/TableSuccess'
-                Success2:
-                  $ref: '#/components/examples/TableSuccess2'
+                Success:
+                  $ref: '#/components/examples/TablewareFetchDataListSuccess'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
-    
+    post:
+      tags:
+        - tableware
+      summary: 食器登録
+      operationId: createTableware
+      parameters: []
+      requestBody:
+       content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/tablewareRequestBody'
+      responses:
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '201':
+          description: create success
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/ResponseFormat'
+              examples:
+                CreateSuccess:
+                  value:
+                    - code: 201
+                    - message: create success
+                    - data:
+                      - id: 2
+                        contents: testContents
+                        is_deleted: false
+  /tableware/{id}:
+    get:
+      tags: 
+        - tableware
+      summary: 食器情報取得
+      description: idを指定して取得
+      operationId: findByTablewareId
+      parameters:
+        - $ref: '#/components/parameters/idPath'
+      responses:
+        '200':
+          description: seccess
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tableware'
+              examples:
+                Success:
+                  $ref: '#/components/examples/TableFetchDataSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - tableware
+      summary: 食器削除処理
+      description: idを指定して論理削除
+      parameters:
+        - $ref: '#/components/parameters/idPath'
+      responses:
+        '200':
+           $ref: '#/components/responses/DeleteSuccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+        - tableware
+      summary: 食器変更処理
+      description: 変更処理
+      parameters:
+        - $ref: '#/components/parameters/idPath'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/tablewareRequestBody'
+      responses:
+        '200':
+          description: seccess
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/tableware'
+              examples:
+                Success:
+                  value:
+                    - code: 200
+                    - message: update success
+                    - data:
+                      - id: 4
+                        contents: updateTestContents
+                        is_deleted: false
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
 security:
   - dish_bearer_auth: []
   - basic_auth: []
@@ -216,7 +310,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: '#/components/schemas/ResponseFormat'
           examples: 
             NotFoundExample:
               $ref: '#/components/examples/NotFoundExample'
@@ -225,7 +319,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: '#/components/schemas/ResponseFormat'
           examples:
             BadRequest:
               $ref: '#/components/examples/BadRequest'
@@ -234,7 +328,7 @@ components:
       content:
         application/json:
           schema: 
-            $ref: '#/components/schemas/Error'
+            $ref: '#/components/schemas/ResponseFormat'
           examples:
             CreateSuccess:
               $ref: '#/components/examples/CreateSuccess'
@@ -243,24 +337,12 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: '#/components/schemas/ResponseFormat'
           examples:
             DeleteSuccess:
               $ref: '#/components/examples/DeleteSuccess'
   schemas:
-    user:
-      type: object
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-      example:
-        - id: 23
-          name: testname
-        - id: 2
-          name: testName2
-    Error:
+    ResponseFormat:
       type: object
       properties:
         code:
@@ -290,6 +372,38 @@ components:
           type: integer
           format: int64
           example: 2
+    tableware:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 1
+        contents:
+          type: string
+          example: testContents
+        is_deleted:
+          type: boolean
+    dishRequestBody:
+      type: object
+      properties:
+        name:
+          type: string
+          example: testName
+        modified:
+          type: string
+          format: date-time
+        table_id: 
+          type: integer
+          format: int64
+          example: 1
+    tablewareRequestBody:
+      type: object
+      properties:
+        contents:
+          type: string
+          example: testContents
   # example
   examples:
     NotFoundExample:
@@ -324,18 +438,25 @@ components:
             modified: 2021-12-30T0:23:23+00:00
             table_id: 3
             is_deleted: false
-    TableSuccess:
+    TableFetchDataSuccess:
       value:
         - code: 200
         - message: success
         - data:
           - id: 1
-    TableSuccess2:
+            contents: testContents
+            is_deleted: true
+    TablewareFetchDataListSuccess:
       value:
         - code: 200
         - message: success
         - data:
           - id: 10
+            contens: testContents1
+            is_deleted: true
+          - id: 13
+            contens: testContents2
+            is_deleted: true
     DishFetchDataSuccess:
       value:
         - code: 200
@@ -370,7 +491,6 @@ components:
       required: true
       schema: 
         type: integer
-        format: int64
   links:
     FindByTableId:
       operationId: FindByTableId
@@ -398,8 +518,3 @@ components:
           tokenUrl: https://example.com/oauth/token
           scopes:
             read: dish read access
-      
-      
-      
-      
-      
